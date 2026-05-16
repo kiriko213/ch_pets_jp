@@ -1,15 +1,16 @@
-{
+﻿{
     "pets_jp": {
-        "profile_name": "猫の楽園",
+        "profile_name": "迪ｫ縺ｮ讌ｽ蝨・,
         "channel_id": "UCf3-ewvkahDy3uQYsTPtj7A",
         "voice": "ja-JP-NanamiNeural",
         "bgm": "bgm.mp3",
-        "tags": "#猫 #ねこ #かわいい #猫のいる暮らし #cat #Shorts",
+        "tags": "#迪ｫ #縺ｭ縺・#縺九ｏ縺・＞ #迪ｫ縺ｮ縺・ｋ證ｮ繧峨＠ #cat #Shorts",
         "task_list_name": "My Tasks",
         "pexels_api_key": "REDACTED_API_KEY",
-        "gemini_api_key": "AIzaSyCzRx56IRFYZiRRuWVd4bU3NRykuDc4X2g",
+        "gemini_api_key": "REDACTED_API_KEY",
         "amazon_storefront_link": "https://amzn.to/42l7R0V",
         "target_animal": "cat",
         "forbidden_animals": ["dog", "hamster", "bird", "rabbit"]
     }
 }
+
