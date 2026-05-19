@@ -1,9 +1,9 @@
-﻿name: AI Shorts Post (Pets JP)
+name: AI Shorts Post (Pets JP)
 
 on:
   schedule:
-    # 譌･譛ｬ譎る俣 07:00, 18:00, 22:00 (UTC 22:00, 09:00, 13:00)
-    - cron: '0 9,13,22 * * *'
+    # 日本時間 07:00, 18:00, 22:00 (UTC 22:00, 09:00, 13:00)
+    - cron: '5 23,8,12 * * *'
   workflow_dispatch:
 
 permissions:
@@ -43,4 +43,5 @@ jobs:
         PYTHONUNBUFFERED: "1"
       run: |
         python auto_main.py
+
 
