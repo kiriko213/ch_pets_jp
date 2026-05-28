@@ -190,7 +190,7 @@ def generate_viral_script(topic="health", channel_context="", api_key=None, feed
 
 
 
-    model = genai.GenerativeModel('gemini-1.0-flash')
+    model = genai.GenerativeModel('gemini-2.0-flash-lite')
 
 
 
