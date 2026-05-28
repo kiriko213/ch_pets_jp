@@ -158,7 +158,26 @@ def generate_viral_script(topic="health", channel_context="", api_key=None, feed
 
 
 
-        genai.configure(api_key=api_key)
+        import json
+        import os
+        from google.oauth2 import service_account
+
+        service_account_str = os.environ.get("GEMINI_SERVICE_ACCOUNT")
+        credentials = None
+        if service_account_str:
+            try:
+                info = json.loads(service_account_str)
+                credentials = service_account.Credentials.from_service_account_info(info)
+            except Exception:
+                if os.path.exists(service_account_str):
+                    try:
+                        credentials = service_account.Credentials.from_service_account_file(service_account_str)
+                    except Exception:
+                        pass
+        if credentials:
+            genai.configure(credentials=credentials)
+        else:
+            genai.configure(api_key=api_key)
 
 
 
