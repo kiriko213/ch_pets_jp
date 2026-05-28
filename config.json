@@ -1,16 +1,16 @@
-﻿{
+{
     "pets_jp": {
-        "profile_name": "迪ｫ縺ｮ讌ｽ蝨・,
+        "profile_name": "ねこ研究所のソラ",
         "channel_id": "UCf3-ewvkahDy3uQYsTPtj7A",
         "voice": "ja-JP-NanamiNeural",
         "bgm": "bgm.mp3",
-        "tags": "#迪ｫ #縺ｭ縺・#縺九ｏ縺・＞ #迪ｫ縺ｮ縺・ｋ證ｮ繧峨＠ #cat #Shorts",
+        "tags": "#ペット #動物 #かわいい #癒やし #pet #Shorts",
         "task_list_name": "My Tasks",
-        "pexels_api_key": "REDACTED_API_KEY",
+        "pexels_api_key": "3OfpfSdk7zLAplKzkkaWa5K4ldXHiomdAyhNcxulIS6T5BMDaHNbGtxR",
         "gemini_api_key": "REDACTED_API_KEY",
-        "amazon_storefront_link": "https://amzn.to/42l7R0V",
         "target_animal": "cat",
-        "forbidden_animals": ["dog", "hamster", "bird", "rabbit"]
+        "forbidden_animals": ["dog", "hamster", "bird", "rabbit", "human"],
+        "google_account": "glowhavenlife88@gmail.com",
+        "gemini_api_key_env_name": "GEMINI_API_KEY_PETS_JP"
     }
 }
-

@@ -12,7 +12,7 @@ def audit_dog_content(title, content, keyword, api_key=None):
     if api_key:
         genai.configure(api_key=api_key)
     
-    model = genai.GenerativeModel('gemini-flash-latest')
+    model = genai.GenerativeModel('gemini-2.5-flash')
     
     audit_prompt = f"""
     You are a HIGHLY STRICT Content Compliance Officer for the YouTube channel "Cat Paradise (猫の楽園)".
