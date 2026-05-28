@@ -1,103 +1,656 @@
-import os
-import google.generativeai as genai
-import datetime
-import re
-
-def generate_viral_script(topic="health", channel_context="", api_key=None, feedback=None, language="en"):
-    """
-    実行役: 動画の台本を生成する。
-    """
-    if api_key:
-        genai.configure(api_key=api_key)
-    
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    
-    feedback_section = ""
-    if feedback:
-        feedback_section = f"""
-        === FEEDBACK FROM AUDITOR/SYSTEM (PLEASE FIX THESE POINTS) ===
-        {feedback}
-        ==============================================================
-        """
- 
-    if language == "ja":
-        prompt = f"""あなたはYouTubeショート動画の台本生成AIです。
-日本語で、13〜15秒の音声に収まるショート台本を作成してください。
-
-【絶対条件】
-- 日本語80〜110文字に収める（110文字を超えない）
-- 行数は5〜7行
-- 1行は短く、句読点を少なめにする
-- 説明を長くしない
-- 語尾を短くする（〜なんだよ → 〜だよ / 〜なんだ → 〜だ）
-- 余計な前置きは書かない
-- 1文を短く区切る（音声が伸びないように）
-
-【内容ルール】
-- テーマに対して「1つの事実だけ」を伝える
-- 導入 → 事実 → 理由 → まとめ の4ステップ構成
-- 導入は短く（例：犬って〇〇するよね）
-- 説明は簡潔に
-- 最後は軽いまとめで締める
-
-【出力フォーマット】
-TITLE: （短く）
-SCRIPT:
-（80〜110字の台本）"""
-    else:
-        prompt = f"""
-        You are a professional YouTube Shorts producer for an English channel.
-        Create an extremely fast, high-impact 15-second viral script.
-        
-        Topic: {topic}
-        {channel_context}
-        
-        {feedback_section}
-        
-        === STRUCTURE (Ultra-Tight 15s Golden Ratio) ===
-        1. [0-3s: Hook] Start with a very short, punchy question ending with a question mark (?).
-           - AVOID cliches like "Did you know...?" or "What if I told you...?"
-           - USE high-impact, ultra-short hooks instead (e.g., "Ever seen...?", "Think you know this...?", "Doing this?").
-        2. [3-12s: Core] Deliver the surprising facts or core insight in exactly two ultra-short, action-oriented sentences. Strip away unnecessary adjectives and adverbs. Keep it under 12 seconds total.
-        3. [12-15s: Closing] End with a short, comment-triggering question or strong empathetic call (1 sentence, e.g., "Think so? Comment below!", "What do you think?").
-        
-        === STRICT RULES ===
-        - [STRICT WORD COUNT] Total word count MUST be strictly between 30 to 37 words max to ensure it easily reads within 12-13 seconds. Absolutely NO exceptions (not even a single word over).
-        - [SCENE SEGMENTATION (4-5 Cuts)] Ensure the script is written in exactly 4 very short sentences (Hook + 2 Core Sentences + Closing) so that the video caption divides into 4 dynamic text changes, preventing static screens.
-        - No emojis. Natural tone.
-        
-        === OUTPUT FORMAT ===
-        Title: [Viral Title]
-        Content:
-        [Short Hook Question]? [Punchy Core Sentence 1]. [Punchy Core Sentence 2]. [Comment-triggering Closing Sentence]!
-        PexelsKeyword: [English keyword for video search. Must include the core theme]
-        """
-    
-    try:
-        response = model.generate_content(prompt)
-        text = response.text
-        
-        # Titleの抽出（大文字小文字を区別せず、最悪の場合のフォールバックを徹底）
-        title_match = re.search(r"(?:Title|TITLE):\s*(.*)", text)
-        title = title_match.group(1).strip() if title_match else f"Insights on {topic}"
-        
-        # Contentの抽出（Content: から PexelsKeyword: までの間を正確に切り出す）
-        content_match = re.search(r"(?:Content|CONTENT):\s*(.*?)(?=(?:PexelsKeyword|PEXELS|\Z))", text, re.DOTALL)
-        if content_match and content_match.group(1).strip():
-            content = content_match.group(1).strip()
-        else:
-            # 抽出失敗時の3秒フォールバックを阻止、テキスト全体からゴミを削って台本とする
-            content = text.replace(f"Title: {title}", "").strip()
-
-        # PexelsKeywordの抽出
-        keyword_match = re.search(r"(?:PexelsKeyword|Pexels|KEYWORDS):\s*(.*)", text, re.IGNORECASE)
-        keyword = "nature" if language != "ja" else "animal"
-        if keyword_match:
-            keyword = keyword_match.group(1).strip()
-            # 台本側に入り込んだキーワード行を完全に消去
-            content = content.replace(keyword_match.group(0), "").strip()
-            
-        return title, content, keyword
-    except Exception as e:
-        print(f"FATAL: Gemini Generation Error: {e}")
-        raise
+import os
+
+
+
+
+
+
+
+import google.generativeai as genai
+
+
+
+
+
+
+
+import datetime
+
+
+
+
+
+
+
+import re
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def generate_viral_script(topic="health", channel_context="", api_key=None, feedback=None, language="en"):
+
+
+
+
+
+
+
+    """
+
+
+
+
+
+
+
+    実行役: 動画の台本を生成する。
+
+
+
+
+
+
+
+    """
+
+
+
+
+
+
+
+    if api_key:
+
+
+
+
+
+
+
+        genai.configure(api_key=api_key)
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    model = genai.GenerativeModel('gemini-2.5-flash')
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    feedback_section = ""
+
+
+
+
+
+
+
+    if feedback:
+
+
+
+
+
+
+
+        feedback_section = f"""
+
+
+
+
+
+
+
+        === FEEDBACK FROM AUDITOR/SYSTEM (PLEASE FIX THESE POINTS) ===
+
+
+
+
+
+
+
+        {feedback}
+
+
+
+
+
+
+
+        ==============================================================
+
+
+
+
+
+
+
+        """
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+    if language == "ja":
+        prompt = """あなたはYouTubeショート動画の台本生成AIです。
+日本語で、13〜15秒の音声に収まるショート台本を作成してください。
+
+【絶対条件】
+- 日本語60〜90文字に収める（90文字を超えない）
+- 行数は4〜6行
+- 1行は短くする
+- 説明を長くしない
+- 語尾を短くする（〜なんだよ → 〜だよ）
+- 余計な前置きは書かない
+- 1文を短く区切りすぎない（改行が多すぎると音声が伸びる）
+
+【内容ルール】
+- テーマに対して「1つの事実だけ」を伝える
+- 導入 → 事実 → 理由 → まとめ の4ステップ構成
+- 導入は短く（例：犬って〇〇するよね）
+- 説明は簡潔に
+- 最後は軽いまとめで締める
+
+【出力フォーマット】
+TITLE: （短く）
+SCRIPT:
+（60〜90字の台本）"""
+    else:
+
+
+
+
+
+
+
+        prompt = f"""
+
+
+
+
+
+
+
+        You are a professional YouTube Shorts producer for an English channel.
+
+
+
+
+
+
+
+        Create an extremely fast, high-impact 15-second viral script.
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        Topic: {topic}
+
+
+
+
+
+
+
+        {channel_context}
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        {feedback_section}
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        === STRUCTURE (Ultra-Tight 15s Golden Ratio) ===
+
+
+
+
+
+
+
+        1. [0-3s: Hook] Start with a very short, punchy question ending with a question mark (?).
+
+
+
+
+
+
+
+           - AVOID cliches like "Did you know...?" or "What if I told you...?"
+
+
+
+
+
+
+
+           - USE high-impact, ultra-short hooks instead (e.g., "Ever seen...?", "Think you know this...?", "Doing this?").
+
+
+
+
+
+
+
+        2. [3-12s: Core] Deliver the surprising facts or core insight in exactly two ultra-short, action-oriented sentences. Strip away unnecessary adjectives and adverbs. Keep it under 12 seconds total.
+
+
+
+
+
+
+
+        3. [12-15s: Closing] End with a short, comment-triggering question or strong empathetic call (1 sentence, e.g., "Think so? Comment below!", "What do you think?").
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        === STRICT RULES ===
+
+
+
+
+
+
+
+        - [STRICT WORD COUNT] Total word count MUST be strictly between 30 to 37 words max to ensure it easily reads within 12-13 seconds. Absolutely NO exceptions (not even a single word over).
+
+
+
+
+
+
+
+        - [SCENE SEGMENTATION (4-5 Cuts)] Ensure the script is written in exactly 4 very short sentences (Hook + 2 Core Sentences + Closing) so that the video caption divides into 4 dynamic text changes, preventing static screens.
+
+
+
+
+
+
+
+        - No emojis. Natural tone.
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        === OUTPUT FORMAT ===
+
+
+
+
+
+
+
+        Title: [Viral Title]
+
+
+
+
+
+
+
+        Content:
+
+
+
+
+
+
+
+        [Short Hook Question]? [Punchy Core Sentence 1]. [Punchy Core Sentence 2]. [Comment-triggering Closing Sentence]!
+
+
+
+
+
+
+
+        PexelsKeyword: [English keyword for video search. Must include the core theme]
+
+
+
+
+
+
+
+        """
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    try:
+
+
+
+
+
+
+
+        response = model.generate_content(prompt)
+
+
+
+
+
+
+
+        text = response.text
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        # Titleの抽出（大文字小文字を区別せず、最悪の場合のフォールバックを徹底）
+
+
+
+
+
+
+
+        title_match = re.search(r"(?:Title|TITLE):\s*(.*)", text)
+
+
+
+
+
+
+
+        title = title_match.group(1).strip() if title_match else f"Insights on {topic}"
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        # Contentの抽出（Content: から PexelsKeyword: までの間を正確に切り出す）
+
+
+
+
+
+
+
+        content_match = re.search(r"(?:Content|CONTENT|Script|SCRIPT):\s*(.*?)(?=(?:PexelsKeyword|PEXELS|\Z))", text, re.DOTALL)
+
+
+
+
+
+
+
+        if content_match and content_match.group(1).strip():
+
+
+
+
+
+
+
+            content = content_match.group(1).strip()
+
+
+
+
+
+
+
+        else:
+
+
+
+
+
+
+
+            # 抽出失敗時の3秒フォールバックを阻止、テキスト全体からゴミを削って台本とする
+
+
+
+
+
+
+
+            content = text.replace(f"Title: {title}", "").replace(f"TITLE: {title}", "").replace("Script:", "").replace("SCRIPT:", "").strip()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # PexelsKeywordの抽出
+
+
+
+
+
+
+
+        keyword_match = re.search(r"(?:PexelsKeyword|Pexels|KEYWORDS):\s*(.*)", text, re.IGNORECASE)
+
+
+
+
+
+
+
+        keyword = "nature" if language != "ja" else "animal"
+
+
+
+
+
+
+
+        if keyword_match:
+
+
+
+
+
+
+
+            keyword = keyword_match.group(1).strip()
+
+
+
+
+
+
+
+            # 台本側に入り込んだキーワード行を完全に消去
+
+
+
+
+
+
+
+            content = content.replace(keyword_match.group(0), "").strip()
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+        return title, content, keyword
+
+
+
+
+
+
+
+    except Exception as e:
+
+
+
+
+
+
+
+        print(f"FATAL: Gemini Generation Error: {e}")
+
+
+
+
+
+
+
+        raise
+
+
+
+
+
+
+
