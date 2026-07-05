@@ -156,12 +156,18 @@ async def run_auto_post(work_dir=".", topic=None):
             print("STEP: Audio duration check...")
             temp_audio_path = os.path.join(work_dir, "temp_audio_check.mp3")
             try:
-                await generate_video.generate_speech(script_content, temp_audio_path, voice=voice_model, rate="+15%")
-                from moviepy.editor import AudioFileClip
-                a_clip = AudioFileClip(temp_audio_path)
-                audio_dur = a_clip.duration
-                a_clip.close()
-                print(f"AUDIO_DURATION: {audio_dur:.2f}s")
+                audio_result = await generate_video.generate_speech(script_content, temp_audio_path, voice=voice_model, rate="+15%")
+                if audio_result and os.path.exists(temp_audio_path) and os.path.getsize(temp_audio_path) >= 100:
+                    from moviepy.editor import AudioFileClip
+                    a_clip = AudioFileClip(temp_audio_path)
+                    audio_dur = a_clip.duration
+                    a_clip.close()
+                    print(f"AUDIO_DURATION: {audio_dur:.2f}s")
+                else:
+                    # Fallback estimated duration based on character count (approx 6 characters per second)
+                    char_count = len(script_content)
+                    audio_dur = max(char_count / 6.0, 5.0)
+                    print(f"AUDIO_GENERATION_FAILED (Returned None). Using estimated duration: {audio_dur:.2f}s")
                 
                 if audio_dur > 15.0:
                     current_feedback = f"THE SCRIPT IS TOO LONG ({audio_dur:.1f}s). Please shorten it to be under 14 seconds. Current text: {script_content}"

@@ -3,6 +3,7 @@ import requests
 import random
 import re
 import edge_tts
+import gtts
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, AudioFileClip, ImageClip, ColorClip, concatenate_videoclips, CompositeAudioClip, vfx, afx
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import numpy as np
@@ -107,19 +108,44 @@ def create_boxed_text_image(text, size=(1080, 1920), fontsize=60):
 
 async def generate_speech(text, output_path, voice="ja-JP-NanamiNeural", rate="+10%"):
     """
-    edge-ttsを使用して音声を生成する。gTTSは使用しない。
+    音声合成を行い、ファイルが正しく生成されたかチェックする。
+    1. Edge TTS (primary)
+    2. gTTS (fallback)
+    3. No audio (final fallback, returns None)
     """
     lang = "ja" if "ja-JP" in voice else "en"
     clean_text = normalize_text_for_speech(text, language=lang)
     
+    # 1. Edge TTS
     try:
+        print(f"[TTS] Attempting Edge TTS for text: '{clean_text[:20]}...'")
         communicate = edge_tts.Communicate(clean_text, voice, rate=rate)
         await communicate.save(output_path)
-        if not os.path.exists(output_path) or os.path.getsize(output_path) < 100:
-            raise Exception("Audio generation failed.")
+        if os.path.exists(output_path) and os.path.getsize(output_path) >= 100:
+            print("[TTS] Edge TTS succeeded.")
+            return output_path
     except Exception as e:
-        print(f"Speech Generation Error: {e}")
-        raise
+        print(f"[TTS_WARN] Edge TTS failed: {e}")
+        
+    # 2. gTTS
+    try:
+        print(f"[TTS] Attempting gTTS fallback...")
+        tts = gtts.gTTS(text=clean_text, lang=lang)
+        tts.save(output_path)
+        if os.path.exists(output_path) and os.path.getsize(output_path) >= 100:
+            print("[TTS] gTTS fallback succeeded.")
+            return output_path
+    except Exception as e:
+        print(f"[TTS_WARN] gTTS fallback failed: {e}")
+
+    # 3. No audio (Final fallback)
+    print("[TTS_FAIL] Both Edge TTS and gTTS failed. Continuing in NO-AUDIO mode.")
+    if os.path.exists(output_path):
+        try:
+            os.remove(output_path)
+        except:
+            pass
+    return None
 
 async def fetch_best_visual(query, api_key, target_animal="dog", forbidden_animals=["cat"], work_dir="."):
     """
@@ -170,17 +196,31 @@ async def assemble_video_professional(script, asset_path, asset_type, bgm_path, 
     os.makedirs(temp_dir, exist_ok=True)
     
     audio_clips = []
+    section_durations = []
     curr = 0
+    any_audio_success = False
+    
     for i, txt in enumerate(sections):
         a_path = os.path.join(temp_dir, f"s_{i}.mp3")
-        await generate_speech(txt, a_path, voice=voice)
-        clip = AudioFileClip(a_path)
-        audio_clips.append(clip.set_start(curr))
-        curr += clip.duration
+        success = await generate_speech(txt, a_path, voice=voice)
+        if success and os.path.exists(a_path) and os.path.getsize(a_path) >= 100:
+            try:
+                clip = AudioFileClip(a_path)
+                audio_clips.append(clip.set_start(curr))
+                section_durations.append(clip.duration)
+                curr += clip.duration
+                any_audio_success = True
+            except Exception as e:
+                print(f"[AUDIO_WARN] Failed to load generated audio clip: {e}")
+                section_durations.append(5.0)
+                curr += 5.0
+        else:
+            # Default duration for no-audio fallback per section
+            section_durations.append(5.0)
+            curr += 5.0
     
-    # 修正：末尾のチラつきを防ぐため、durationを音声の合計時間に厳密に合わせる
-    duration = min(curr, 15.0) 
-    final_audio_content = CompositeAudioClip(audio_clips)
+    duration = min(curr if curr > 0 else 15.0, 15.0)
+    final_audio_content = CompositeAudioClip(audio_clips) if (any_audio_success and audio_clips) else None
     
     if asset_type == "video" and asset_path:
         clip = VideoFileClip(asset_path).without_audio()
@@ -190,15 +230,12 @@ async def assemble_video_professional(script, asset_path, asset_type, bgm_path, 
         clip_ratio = clip.w / clip.h
         
         if clip_ratio > target_ratio:
-            # 横幅が広すぎる場合、高さを基準にして幅を削る
             new_w = int(clip.h * target_ratio)
             bg_cropped = clip.crop(x_center=clip.w/2, y_center=clip.h/2, width=new_w, height=clip.h)
         else:
-            # 縦が長すぎる場合、幅を基準にして高さを削る
             new_h = int(clip.w / target_ratio)
             bg_cropped = clip.crop(x_center=clip.w/2, y_center=clip.h/2, width=clip.w, height=new_h)
             
-        # 2. トリミングした映像を、縦横比を一切歪ませずにジャスト1080x1920にリサイズする
         bg = bg_cropped.resize(newsize=(1080, 1920))
         bg = bg.fx(vfx.loop, duration=duration) if bg.duration < duration else bg.subclip(0, duration)
     else:
@@ -207,8 +244,7 @@ async def assemble_video_professional(script, asset_path, asset_type, bgm_path, 
     subs = []
     t_curr = 0
     for i, txt in enumerate(sections):
-        dur = audio_clips[i].duration
-        # 字幕の表示時間も厳密に管理
+        dur = section_durations[i]
         if t_curr + dur > duration:
             dur = duration - t_curr
         if dur <= 0: break
@@ -222,23 +258,29 @@ async def assemble_video_professional(script, asset_path, asset_type, bgm_path, 
     final_audio = final_audio_content
     if bgm_path and os.path.exists(bgm_path):
         try:
-            # BGMも動画の長さに合わせる
             bgm = AudioFileClip(bgm_path).volumex(0.15).fx(afx.audio_loop, duration=duration)
-            final_audio = CompositeAudioClip([final_audio_content.volumex(1.0), bgm])
+            if final_audio:
+                final_audio = CompositeAudioClip([final_audio_content.volumex(1.0), bgm])
+            else:
+                final_audio = bgm
         except Exception as e:
             print(f"BGM loading failed: {e}")
 
     try:
-        video = CompositeVideoClip([bg] + subs).set_audio(final_audio).set_duration(duration)
-        video.write_videofile(output_filename, fps=30, codec="libx264", audio_codec="aac", ffmpeg_params=["-pix_fmt", "yuv420p", "-movflags", "faststart"])
+        if final_audio:
+            video = CompositeVideoClip([bg] + subs).set_audio(final_audio).set_duration(duration)
+            video.write_videofile(output_filename, fps=30, codec="libx264", audio_codec="aac", ffmpeg_params=["-pix_fmt", "yuv420p", "-movflags", "faststart"])
+        else:
+            video = CompositeVideoClip([bg] + subs).set_duration(duration)
+            video.write_videofile(output_filename, fps=30, codec="libx264", audio=False, ffmpeg_params=["-pix_fmt", "yuv420p", "-movflags", "faststart"])
         
-        # クリップの解放 (Windowsでのファイルロック対策)
         video.close()
         if asset_type == "video":
             bg.close()
         for s in subs:
             s.close()
-        final_audio.close()
+        if final_audio:
+            final_audio.close()
         for a in audio_clips:
             a.close()
             
