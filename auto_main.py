@@ -69,8 +69,8 @@ async def run_auto_post(work_dir=".", topic=None):
             # ハムスター専用トピック
             topics = ["ハムスターの豆知識", "可愛いハムスターの日常", "ハムスターのしつけと飼い方"]
         elif "pets" in profile_key:
-            # 一般ペット向けトピック
-            topics = ["ペットの豆知識", "可愛い動物の癒やし", "ペットとの暮らし"]
+            # 猫特化トピック (Cat-only universe)
+            topics = ["猫の豆知識", "猫の不思議な習性", "可愛い猫の日常", "猫の雑学", "猫の行動心理"]
         elif "dog" in profile_key:
             if "_en" in profile_key:
                 topics = ["Funny dog facts", "Puppy joy", "Dog training tips", "Smart dog tricks", "Living with dogs"]

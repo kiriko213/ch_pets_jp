@@ -370,52 +370,40 @@ def generate_viral_script(topic="health", channel_context="", api_key=None, feed
 
 
     if language == "ja":
+        prompt = f"""あなたはYouTubeショート動画の台本生成AIです。
 
-        prompt = """あなたはYouTubeショート動画の台本生成AIです。
+テーマ「{topic}」について、日本語で13〜15秒の音声に収まるショート台本を作成してください。
 
-日本語で、13〜15秒の音声に収まるショート台本を作成してください。
+チャンネルの文脈: {channel_context}
+{feedback_section}
 
-
+【厳格な猫特化ルール】
+- あなたは「猫（ねこ）」に関するコンテンツのみを生成するように厳格に制限されています。
+- 犬、鳥、爬虫類、ハムスターなど、他のすべての動物は厳格に禁止されています。
+- もしテーマが一般的な『ペット』や『動物』である場合は、必ず猫に関連した内容に変換して作成してください。
+- どのような状況下でも、猫以外の動物が出力に含まれてはなりません。
 
 【絶対条件】
-
 - 日本語60〜90文字に収める（90文字を超えない）
-
 - 行数は4〜6行
-
 - 1行は短くする
-
 - 説明を長くしない
-
 - 語尾を短くする（〜なんだよ → 〜だよ）
-
 - 余計な前置きは書かない
-
 - 1文を短く区切りすぎない（改行が多すぎると音声が伸びる）
 
-
-
 【内容ルール】
-
 - テーマに対して「1つの事実だけ」を伝える
-
 - 導入 → 事実 → 理由 → まとめ の4ステップ構成
-
-- 導入は短く（例：犬って〇〇するよね）
-
+- 導入は短く（例：猫って〇〇するよね）
 - 説明は簡潔に
-
 - 最後は軽いまとめで締める
 
-
-
 【出力フォーマット】
-
-TITLE: （短く）
-
+TITLE: （ここに短くキャッチーなタイトル）
 SCRIPT:
-
-（60〜90字の台本）"""
+（ここに60〜90字の台本）
+PexelsKeyword: （動画検索用の英単語。例：cat playing）"""
 
     else:
 
@@ -1264,6 +1252,18 @@ SCRIPT:
 
 
 
+
+        # ポストプロセスフィルター（猫正規化セーフティレイヤー）
+        # 犬、ハムスター、鳥などのキーワードを猫向けの内容に強制置換
+        replacements = {
+            r"犬": "猫", r"いぬ": "ねこ", r"イヌ": "ネコ", r"dog": "cat", r"Dog": "Cat", r"DOG": "CAT",
+            r"ハムスター": "ねこ", r"hamster": "cat", r"Hamster": "Cat",
+            r"鳥": "ねこ", r"とり": "ねこ", r"トリ": "ネコ", r"bird": "cat", r"Bird": "Cat",
+            r"爬虫類": "ねこ", r"reptile": "cat", r"Reptile": "Cat"
+        }
+        for pattern, replacement in replacements.items():
+            content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
+            title = re.sub(pattern, replacement, title, flags=re.IGNORECASE)
 
         return title, content, keyword
 
