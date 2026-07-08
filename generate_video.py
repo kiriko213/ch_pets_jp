@@ -181,7 +181,7 @@ def create_boxed_text_image(text, size=(1080, 1920), fontsize=60):
         
     return img
 
-async def generate_speech(text, output_path, voice="ja-JP-AoiNeural", rate="+10%"):
+async def generate_speech(text, output_path, voice="ja-JP-AoiNeural", rate="+8%"):
     """
     音声合成を行い、ファイルが正しく生成されたかチェックする。
     1. VOICEVOX (primary local, fallback if unavailable)
