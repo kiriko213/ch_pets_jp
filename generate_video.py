@@ -225,7 +225,7 @@ async def generate_speech(text, output_path, voice="ja-JP-AoiNeural", rate="+8%"
     # 2. Edge TTS
     try:
         print(f"[TTS] Attempting Edge TTS for text: '{clean_text[:20]}...'")
-        communicate = edge_tts.Communicate(clean_text, voice, rate=rate)
+        communicate = edge_tts.Communicate(clean_text, voice, rate=rate, pitch="-2Hz")
         await communicate.save(output_path)
         if os.path.exists(output_path) and os.path.getsize(output_path) >= 100:
             print("[TTS] Edge TTS succeeded.")
