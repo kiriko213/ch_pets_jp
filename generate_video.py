@@ -193,7 +193,7 @@ async def generate_speech(text, output_path, voice="ja-JP-NanamiNeural", rate="+
     clean_text = normalize_text_for_speech(text, language=lang)
     
     # 1. VOICEVOX (Local engine)
-    if lang == "ja":
+    if lang == "ja" and os.environ.get("GITHUB_ACTIONS") != "true":
         try:
             print(f"[TTS] Attempting VOICEVOX for text: '{clean_text[:20]}...'")
             speaker_id = 2
