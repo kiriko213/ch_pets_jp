@@ -205,6 +205,8 @@ async def generate_speech(text, output_path, voice="ja-JP-NanamiNeural", rate="+
             if query_res.status_code == 200:
                 query_data = query_res.json()
                 query_data["speedScale"] = 1.1
+                query_data["pitchScale"] = -0.03
+                query_data["intonationScale"] = 1.1
                 synth_res = requests.post(
                     f"http://localhost:50021/synthesis",
                     params={"speaker": speaker_id},
@@ -373,7 +375,7 @@ async def assemble_video_professional(script, asset_path, asset_type, bgm_path, 
     try:
         if final_audio:
             video = CompositeVideoClip([bg] + subs).set_audio(final_audio).set_duration(duration)
-            video.write_videofile(output_filename, fps=30, codec="libx264", audio_codec="aac", ffmpeg_params=["-pix_fmt", "yuv420p", "-movflags", "faststart"])
+            video.write_videofile(output_filename, fps=30, codec="libx264", audio_codec="aac", audio_fps=44100, audio_bitrate="192k", ffmpeg_params=["-pix_fmt", "yuv420p", "-movflags", "faststart"])
         else:
             video = CompositeVideoClip([bg] + subs).set_duration(duration)
             video.write_videofile(output_filename, fps=30, codec="libx264", audio=False, ffmpeg_params=["-pix_fmt", "yuv420p", "-movflags", "faststart"])
