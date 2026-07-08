@@ -181,7 +181,7 @@ def create_boxed_text_image(text, size=(1080, 1920), fontsize=60):
         
     return img
 
-async def generate_speech(text, output_path, voice="ja-JP-NanamiNeural", rate="+10%"):
+async def generate_speech(text, output_path, voice="ja-JP-AoiNeural", rate="+10%", speaker_id=None):
     """
     音声合成を行い、ファイルが正しく生成されたかチェックする。
     1. VOICEVOX (primary local, fallback if unavailable)
@@ -290,7 +290,7 @@ async def fetch_best_visual(query, api_key, target_animal="dog", forbidden_anima
             continue
     return None, None
 
-async def assemble_video_professional(script, asset_path, asset_type, bgm_path, output_filename, voice="ja-JP-NanamiNeural", topic="", work_dir="."):
+async def assemble_video_professional(script, asset_path, asset_type, bgm_path, output_filename, voice="ja-JP-AoiNeural", topic="", work_dir="."):
     raw_sections = [s.strip() for s in re.split(r'(?<=[。！!？\?\n])', script) if s.strip()]
     if len(raw_sections) > 3:
         n = len(raw_sections)

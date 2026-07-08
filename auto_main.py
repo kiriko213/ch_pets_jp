@@ -82,8 +82,8 @@ async def run_auto_post(work_dir=".", topic=None):
         
     # 言語の判定と音声モデルの厳格割り当て
     language = "ja" if "_jp" in profile_key else "en"
-    # 日本向けは Nanami, 海外向けは高品質な Ava を使用
-    voice_model = "ja-JP-NanamiNeural" if language == "ja" else "en-US-AvaNeural"
+    # 日本向けは Aoi, 海外向けは高品質な Ava を使用
+    voice_model = "ja-JP-AoiNeural" if language == "ja" else "en-US-AvaNeural"
     
     print(f"=== AUTO POST START: {p['profile_name']} (topic: {topic}, lang: {language}, voice: {voice_model}) ===")
     
