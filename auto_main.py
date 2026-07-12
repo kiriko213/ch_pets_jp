@@ -131,7 +131,16 @@ async def run_auto_post(work_dir=".", topic=None):
         # チャンネルの文脈（ターゲット動物など）を構築
         target_animal = p.get('target_animal', 'pets')
         forbidden = ", ".join(p.get('forbidden_animals', []))
-        channel_context = f"This channel is dedicated to {target_animal}. DO NOT mention: {forbidden}."
+        history_file = os.path.join(work_dir, "script_history.txt")
+        past_titles = []
+        if os.path.exists(history_file):
+            try:
+                with open(history_file, "r", encoding="utf-8") as f:
+                    past_titles = [line.strip() for line in f.readlines()[-20:] if line.strip()]
+            except Exception:
+                pass
+        history_context = " 過去に作成した以下の内容は絶対に避けてください: " + ", ".join(past_titles) + "." if past_titles else ""
+        channel_context = f"This channel is dedicated to {target_animal}. DO NOT mention: {forbidden}.{history_context}"
         
         for attempt in range(1, max_attempts + 1):
             print(f"ATTEMPT {attempt}/{max_attempts}: Generating script...")
@@ -147,6 +156,11 @@ async def run_auto_post(work_dir=".", topic=None):
             # 文字化け対策
             title = strip_emojis(title)
             script_content = strip_emojis(script_content)
+            try:
+                with open(history_file, "a", encoding="utf-8") as f:
+                    f.write(f"{title}\n")
+            except Exception:
+                pass
             
             print(f"TITLE: {title}")
             print(f"SCRIPT: {script_content[:100]}...")
