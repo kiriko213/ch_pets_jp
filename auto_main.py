@@ -133,13 +133,28 @@ async def run_auto_post(work_dir=".", topic=None):
         forbidden = ", ".join(p.get('forbidden_animals', []))
         history_file = os.path.join(work_dir, "script_history.txt")
         past_titles = []
+        past_topics = []
         if os.path.exists(history_file):
             try:
                 with open(history_file, "r", encoding="utf-8") as f:
-                    past_titles = [line.strip() for line in f.readlines()[-20:] if line.strip()]
+                    for line in f.readlines()[-20:]:
+                        line_str = line.strip()
+                        if not line_str:
+                            continue
+                        if "|" in line_str:
+                            parts = line_str.split("|", 1)
+                            past_titles.append(parts[0].strip())
+                            past_topics.append(parts[1].strip())
+                        else:
+                            past_titles.append(line_str)
             except Exception:
                 pass
-        history_context = " 過去に作成した以下の動画タイトルと、同一のタイトル、類似するテーマ、類似する事実、類似する構成、および類似する視点に基づく内容は絶対に避けてください: " + ", ".join(past_titles) + "." if past_titles else ""
+        past_topics = list(dict.fromkeys(past_topics)) # 重複排除
+        history_context = ""
+        if past_titles:
+            history_context += " 過去に作成した以下の動画タイトルと類似する内容は絶対に避けてください: " + ", ".join(past_titles) + "."
+        if past_topics:
+            history_context += " また、過去に使用した以下のテーマ（トピック）に関する事実や構成、視点は絶対に避け、全く異なる新規の切り口で作成してください: " + ", ".join(past_topics) + "."
         channel_context = f"This channel is dedicated to {target_animal}. DO NOT mention: {forbidden}.{history_context}"
         
         for attempt in range(1, max_attempts + 1):
@@ -158,7 +173,7 @@ async def run_auto_post(work_dir=".", topic=None):
             script_content = strip_emojis(script_content)
             try:
                 with open(history_file, "a", encoding="utf-8") as f:
-                    f.write(f"{title}\n")
+                    f.write(f"{title}|{topic}\n")
             except Exception:
                 pass
             
