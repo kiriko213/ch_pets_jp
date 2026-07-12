@@ -139,7 +139,7 @@ async def run_auto_post(work_dir=".", topic=None):
                     past_titles = [line.strip() for line in f.readlines()[-20:] if line.strip()]
             except Exception:
                 pass
-        history_context = " 過去に作成した以下の内容は絶対に避けてください: " + ", ".join(past_titles) + "." if past_titles else ""
+        history_context = " 過去に作成した以下の動画タイトルと、同一のタイトル、類似するテーマ、類似する事実、類似する構成、および類似する視点に基づく内容は絶対に避けてください: " + ", ".join(past_titles) + "." if past_titles else ""
         channel_context = f"This channel is dedicated to {target_animal}. DO NOT mention: {forbidden}.{history_context}"
         
         for attempt in range(1, max_attempts + 1):
