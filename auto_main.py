@@ -401,3 +401,23 @@ if __name__ == "__main__":
     w_dir = sys.argv[1] if len(sys.argv) > 1 else '.'
     t_key = sys.argv[2] if len(sys.argv) > 2 else None
     asyncio.run(run_auto_post(w_dir, t_key))
+    
+    logs = []
+    log_files = ["pipeline.log", "out.txt"]
+    for log_file in log_files:
+        path = os.path.join(w_dir, log_file)
+        if os.path.exists(path):
+            for encoding in ["utf-8", "utf-16", "utf-16-le", "cp932"]:
+                try:
+                    with open(path, "r", encoding=encoding) as f:
+                        logs = f.readlines()
+                    break
+                except Exception:
+                    pass
+            if logs:
+                break
+                
+    if auditor:
+        result = auditor.check_monetization_health(logs)
+        if result == "CRITICAL_SAFETY_ABORT":
+            sys.exit(1)

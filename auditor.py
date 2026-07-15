@@ -72,3 +72,8 @@ def audit_dog_content(title, content, keyword, api_key=None):
     except Exception as e:
         print(f"Audit Error: {e}")
         return False, "Audit system error. Please retry."
+
+def check_monetization_health(logs):
+    if any("403" in log or "429" in log for log in logs): return "CRITICAL_SAFETY_ABORT"
+    if any("[WARN]" in log for log in logs): return "WARNING_CHECK_REQUIRED"
+    return "PASS"
