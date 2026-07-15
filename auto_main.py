@@ -7,6 +7,7 @@ import datetime
 import re
 import time
 import traceback
+import difflib
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
 
@@ -33,6 +34,8 @@ def strip_emojis(text):
     # ASCII + 日本語（ひらがな、カタカナ、漢字、句読点）
     pattern = r'[^\x00-\x7F\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\uFF00-\uFFEF\u4E00-\u9FAF\n]+'
     return re.sub(pattern, ' ', text).strip()
+
+def check_similarity(new_title, past_titles, threshold=0.7): return any(difflib.SequenceMatcher(None, new_title, pt).ratio() >= threshold for pt in past_titles)
 
 async def run_auto_post(work_dir=".", topic=None):
     """
@@ -162,6 +165,10 @@ async def run_auto_post(work_dir=".", topic=None):
             title, script_content, search_query = ai_generator.generate_viral_script(
                 topic, channel_context=channel_context, api_key=gemini_key, feedback=current_feedback, language=language
             )
+            if check_similarity(title, past_titles):
+                continue
+            if topic in past_topics:
+                continue
             
             # 【重要】Gemini失敗時のプレースホルダー漏出を検知して即座に停止
             if "Short dog insight" in script_content or not script_content:
