@@ -8,6 +8,7 @@ import re
 import time
 import traceback
 import difflib
+import google.generativeai as genai
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
 
@@ -60,28 +61,37 @@ async def run_auto_post(work_dir=".", topic=None):
     
     # チャンネル固有のテーマ設定
     if not topic:
-        if "topics" in p and p["topics"]:
-            topics = p["topics"]
-        elif "aesthetic" in profile_key:
-            # 旅行・地理・景観チャンネル向けトピック
-            topics = ["Beautiful landscape spots", "Famous historical landmarks", "Stunning geographical wonders", "Aesthetic nature travel", "Mystery travel destinations"]
-        elif "pawvana" in profile_key:
-            # 癒やし・マインドフルネス・スピリチュアル向けトピック
-            topics = ["Relaxing pet meditation", "Calm puppy relaxation", "Peaceful nature music", "Mindfulness for pets", "Soothing pet stories"]
-        elif "ham" in profile_key:
-            # ハムスター専用トピック
-            topics = ["ハムスターの豆知識", "可愛いハムスターの日常", "ハムスターのしつけと飼い方"]
-        elif "pets" in profile_key:
-            # 猫特化トピック (Cat-only universe)
-            topics = ["猫の豆知識", "猫の不思議な習性", "可愛い猫の日常", "猫の雑学", "猫の行動心理"]
-        elif "dog" in profile_key:
-            if "_en" in profile_key:
-                topics = ["Funny dog facts", "Puppy joy", "Dog training tips", "Smart dog tricks", "Living with dogs"]
-            else:
-                topics = ["犬の豆知識", "子犬の癒やし", "犬のしつけ", "賢い犬 of the day", "犬との暮らし"]
+        gemini_key = (
+            os.environ.get("GEMINI_API_KEY")
+            or os.environ.get(f"GEMINI_API_KEY_{profile_key.upper()}")
+            or p.get('gemini_api_key')
+        )
+        if not gemini_key:
+            raise Exception("FATAL: No Gemini API key available for topic generation")
+        
+        service_account_str = os.environ.get("GEMINI_SERVICE_ACCOUNT")
+        credentials = None
+        if service_account_str:
+            import json
+            from google.oauth2 import service_account
+            try:
+                info = json.loads(service_account_str)
+                credentials = service_account.Credentials.from_service_account_info(info)
+            except Exception:
+                if os.path.exists(service_account_str):
+                    try:
+                        credentials = service_account.Credentials.from_service_account_file(service_account_str)
+                    except Exception:
+                        pass
+        if credentials:
+            genai.configure(credentials=credentials)
         else:
-            topics = ["Beautiful nature spots", "Aesthetic scenes"]
-        topic = random.choice(topics)
+            genai.configure(api_key=gemini_key)
+
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        prompt = "猫に関する、まだ誰も見たことがないような新しいサブトピック（例：特定の行動の心理、不思議な身体能力など）を日本語で1件だけ出力してください。前置きや解説、マークダウン記号などは一切含めず、サブトピック名のみを出力してください。"
+        response = model.generate_content(prompt)
+        topic = response.text.strip().replace('"', '').replace("'", "")
         
     # 言語の判定と音声モデルの厳格割り当て
     language = "ja" if "_jp" in profile_key else "en"
