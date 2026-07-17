@@ -60,7 +60,8 @@ async def run_auto_post(work_dir=".", topic=None):
     print(f"PROFILE_NAME: {p['profile_name']}")
     
     # チャンネル固有のテーマ設定
-    if not topic:
+    initial_topic = topic
+    if not initial_topic:
         gemini_key = (
             os.environ.get("GEMINI_API_KEY")
             or os.environ.get(f"GEMINI_API_KEY_{profile_key.upper()}")
@@ -87,11 +88,6 @@ async def run_auto_post(work_dir=".", topic=None):
             genai.configure(credentials=credentials)
         else:
             genai.configure(api_key=gemini_key)
-
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        prompt = "猫に関する、まだ誰も見たことがないような新しいサブトピック（例：特定の行動の心理、不思議な身体能力など）を日本語で1件だけ出力してください。前置きや解説、マークダウン記号などは一切含めず、サブトピック名のみを出力してください。"
-        response = model.generate_content(prompt)
-        topic = response.text.strip().replace('"', '').replace("'", "")
         
     # 言語の判定と音声モデルの厳格割り当て
     language = "ja" if "_jp" in profile_key else "en"
@@ -150,7 +146,7 @@ async def run_auto_post(work_dir=".", topic=None):
         if os.path.exists(history_file):
             try:
                 with open(history_file, "r", encoding="utf-8") as f:
-                    for line in f.readlines()[-20:]:
+                    for line in f.readlines():
                         line_str = line.strip()
                         if not line_str:
                             continue
@@ -172,6 +168,12 @@ async def run_auto_post(work_dir=".", topic=None):
         
         for attempt in range(1, max_attempts + 1):
             print(f"ATTEMPT {attempt}/{max_attempts}: Generating script...")
+            if not initial_topic:
+                model = genai.GenerativeModel('gemini-2.5-flash')
+                history_str = ", ".join(past_topics) if past_topics else "なし"
+                prompt = f"猫に関する、まだ誰も見たことがないような新しいサブトピック（例：特定の行動の心理、不思議な身体能力など）を日本語で1件だけ出力してください。前置きや解説、マークダウン記号などは一切含めず、サブトピック名のみを出力してください。\n\n【重要】以下の過去のトピック履歴とは絶対に重複しない、全く新しいトピックを生成してください：\n{history_str}"
+                response = model.generate_content(prompt)
+                topic = response.text.strip().replace('"', '').replace("'", "")
             title, script_content, search_query = ai_generator.generate_viral_script(
                 topic, channel_context=channel_context, api_key=gemini_key, feedback=current_feedback, language=language
             )
