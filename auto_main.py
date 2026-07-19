@@ -74,10 +74,10 @@ async def run_auto_post(work_dir=".", topic=None):
         service_account_str = os.environ.get("GEMINI_SERVICE_ACCOUNT")
         credentials = None
         if service_account_str:
-            import json
+            import json as json_data
             from google.oauth2 import service_account
             try:
-                info = json.loads(service_account_str)
+                info = json_data.loads(service_account_str)
                 credentials = service_account.Credentials.from_service_account_info(info)
             except Exception:
                 if os.path.exists(service_account_str):
