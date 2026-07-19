@@ -34,6 +34,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Start VOICEVOX Engine
+      run: |
+        docker run --rm -d -p 50021:50021 voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+        sleep 15
+
     - name: Run Auto Post
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_PETS_JP }}
