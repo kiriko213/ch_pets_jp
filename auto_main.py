@@ -165,7 +165,7 @@ async def run_auto_post(work_dir=".", topic=None):
             history_context += " 過去に作成した以下の動画タイトルと類似する内容は絶対に避けてください: " + ", ".join(past_titles) + "."
         if past_topics:
             history_context += " また、過去に使用した以下のテーマ（トピック）に関する事実や構成、視点は絶対に避け、全く異なる新規の切り口で作成してください: " + ", ".join(past_topics) + "."
-        channel_context = f"This channel is dedicated to {target_animal}. DO NOT mention: {forbidden}.{history_context}"
+        channel_context = f"This channel is dedicated to {target_animal}. DO NOT mention: {forbidden}.{history_context} The script MUST be extremely short, maximum 60 Japanese characters, to ensure the TTS reading time strictly remains under 15 seconds."
         
         for attempt in range(1, max_attempts + 1):
             print(f"ATTEMPT {attempt}/{max_attempts}: Generating script...")
