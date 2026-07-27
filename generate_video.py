@@ -204,14 +204,17 @@ async def fetch_best_visual(query, api_key, target_animal="dog", forbidden_anima
     
     for q in queries:
         try:
-            v_url = f"https://api.pexels.com/videos/search?query={q}&per_page=15&orientation=portrait"
+            page = random.randint(1, 3)
+            v_url = f"https://api.pexels.com/videos/search?query={q}&per_page=15&orientation=portrait&page={page}"
             res = requests.get(v_url, headers=headers)
             res.raise_for_status()
             v_data = res.json()
             if v_data.get('videos'):
                 videos = v_data['videos']
-                target_video = next((v for v in videos if v['duration'] >= 12), videos[0])
-                best_file = [f for f in target_video['video_files'] if f['width'] >= 720][0]
+                valid_videos = [v for v in videos if v.get('duration', 0) >= 12]
+                target_video = random.choice(valid_videos) if valid_videos else random.choice(videos)
+                valid_files = [f for f in target_video['video_files'] if f.get('width', 0) >= 720]
+                best_file = valid_files[0] if valid_files else target_video['video_files'][0]
                 path = os.path.join(work_dir, "temp_bg.mp4")
                 with open(path, 'wb') as f: f.write(requests.get(best_file['link']).content)
                 return path, "video"
@@ -272,7 +275,7 @@ async def assemble_video_professional(script, asset_path, asset_type, bgm_path, 
             new_h = int(clip.w / target_ratio)
             bg_cropped = clip.crop(x_center=clip.w/2, y_center=clip.h/2, width=clip.w, height=new_h)
             
-        bg = bg_cropped.resize(newsize=(1080, 1920))
+        bg = bg_cropped.resize(newsize=(1080, 1920)).fx(vfx.mirror_x)
         bg = bg.fx(vfx.loop, duration=duration) if bg.duration < duration else bg.subclip(0, duration)
     else:
         bg = ColorClip(size=(1080, 1920), color=(30, 30, 30)).set_duration(duration)

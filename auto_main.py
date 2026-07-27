@@ -336,7 +336,8 @@ async def run_auto_post(work_dir=".", topic=None):
             },
             'status': {
                 'privacyStatus': 'public',
-                'selfDeclaredMadeForKids': False
+                'selfDeclaredMadeForKids': False,
+                'containsSyntheticMedia': True
             }
         }
         
