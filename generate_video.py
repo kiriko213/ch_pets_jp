@@ -62,30 +62,74 @@ def create_boxed_text_image(text, size=(1080, 1920), fontsize=60):
     # 最大3行程度に収める
     max_width = 850
     
-    # 日本語/中国語などの全角文字が含まれるか判定
-    is_cjk = any(ord(char) > 0x2000 for char in text)
-    
-    if is_cjk:
-        # 日本語などの文字単位での分割
-        words = list(text.strip())
-        join_char = ""
-    else:
-        # 英語などの単語単位での分割
-        words = text.strip().split()
-        join_char = " "
-        
+    # ----------------------------------------------------
+    # [追加] BudouXの動的インポート試行
+    # ----------------------------------------------------
+    try:
+        import budoux
+        parser = budoux.load_default_japanese_parser()
+    except ImportError:
+        parser = None
+
+    # ----------------------------------------------------
+    # [追加] 禁則文字・助詞の定義（フォールバック用）
+    # ----------------------------------------------------
+    kinsoku_chars = set("、。！？)）]｝〉》」』】〕ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヶー々‐゠–〜～")
+    joshis = set("はがのをにへとでやらもねよか")
+
+    # 1. 明示的な改行コード（\n）でまず分割
+    raw_lines = text.strip().split('\n')
     lines = []
-    current_line = ""
-    
-    for word in words:
-        test_line = (current_line + join_char + word).strip() if current_line else word
-        if draw.textbbox((0, 0), test_line, font=font)[2] > max_width and current_line:
-            lines.append(current_line)
-            current_line = word
+
+    for raw_line in raw_lines:
+        if not raw_line:
+            lines.append("")
+            continue
+
+        is_cjk = any(ord(char) > 0x2000 for char in raw_line)
+        
+        # 2. 単語/文字/文節の分割方式を決定
+        if is_cjk:
+            if parser is not None:
+                # BudouXが利用可能な場合は文節単位で分割
+                words = parser.parse(raw_line)
+                join_char = ""
+            else:
+                # 未インストールの場合は1文字単位で分割
+                words = list(raw_line)
+                join_char = ""
         else:
-            current_line = test_line
-    if current_line:
-        lines.append(current_line)
+            words = raw_line.split()
+            join_char = " "
+            
+        current_line = ""
+        for i, word in enumerate(words):
+            test_line = (current_line + join_char + word).strip() if current_line else word
+            
+            # 3. 折り返し判定幅を超えた場合
+            if draw.textbbox((0, 0), test_line, font=font)[2] > max_width and current_line:
+                # 4. 禁則処理の適用（CJKかつBudouX不使用時のみ）
+                if is_cjk and parser is None:
+                    # 次の行頭に来る予定の文字 (word) が句読点等の場合、前行の末尾に結合して改行
+                    if word in kinsoku_chars:
+                        current_line += word
+                        lines.append(current_line)
+                        current_line = ""
+                    # 助詞の場合、前行の最後の1文字を巻き込んで次行へ送る（1字手前で改行）
+                    elif word in joshis and len(current_line) > 1:
+                        last_char = current_line[-1]
+                        lines.append(current_line[:-1])
+                        current_line = last_char + word
+                    else:
+                        lines.append(current_line)
+                        current_line = word
+                else:
+                    lines.append(current_line)
+                    current_line = word
+            else:
+                current_line = test_line
+        if current_line:
+            lines.append(current_line)
     
     # 描画位置の計算
     line_spacing = 30
