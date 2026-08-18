@@ -133,24 +133,12 @@ def create_boxed_text_image(text, size=(1080, 1920), fontsize=60):
     
     # 描画位置の計算
     line_spacing = 30
-    total_text_height = sum([draw.textbbox((0, 0), l, font=font)[3] - draw.textbbox((0, 0), l, font=font)[1] for l in lines]) + line_spacing * (len(lines) - 1)
     
-    box_width = 950
-    box_height = total_text_height + 120
-    box_x = (size[0] - box_width) // 2
-    box_y = (size[1] - box_height) // 2
-    
-    overlay = Image.new('RGBA', size, (0, 0, 0, 0))
-    overlay_draw = ImageDraw.Draw(overlay)
-    overlay_draw.rounded_rectangle([box_x, box_y, box_x + box_width, box_y + box_height], radius=40, fill=(0, 0, 0, 160))
-    img = Image.alpha_composite(img, overlay)
-    draw = ImageDraw.Draw(img)
-    
-    current_y = box_y + 60
+    current_y = int(size[1] * 0.18)
     for line in lines:
         w = draw.textbbox((0, 0), line, font=font)[2]
         x = (size[0] - w) // 2
-        draw.text((x, current_y), line, font=font, fill=(255, 255, 255), stroke_width=2, stroke_fill=(0,0,0))
+        draw.text((x, current_y), line, font=font, fill=(255, 255, 255), stroke_width=4, stroke_fill=(0,0,0))
         current_y += draw.textbbox((0, 0), line, font=font)[3] - draw.textbbox((0, 0), line, font=font)[1] + line_spacing
         
     return img
